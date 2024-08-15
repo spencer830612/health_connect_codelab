@@ -108,11 +108,17 @@ class HealthConnectManager(private val context: Context) {
   }
 
   /**
-   * TODO: Reads in existing [WeightRecord]s.
+   * 讀取體重記錄
    */
   suspend fun readWeightInputs(start: Instant, end: Instant): List<WeightRecord> {
-    // Toast.makeText(context, "TODO: read weight inputs", Toast.LENGTH_SHORT).show()
-    return emptyList()
+    // 第一步：確認要求記錄的種類與時間範圍
+    val request = ReadRecordsRequest(
+      recordType = WeightRecord::class,
+      timeRangeFilter = TimeRangeFilter.between(start, end)
+    )
+    // 第二步：傳送要求
+    val response = healthConnectClient.readRecords(request)
+    return response.records
   }
 
   /**
@@ -127,8 +133,12 @@ class HealthConnectManager(private val context: Context) {
    * TODO: Obtains a list of [ExerciseSessionRecord]s in a specified time frame.
    */
   suspend fun readExerciseSessions(start: Instant, end: Instant): List<ExerciseSessionRecord> {
-    // Toast.makeText(context, "TODO: read exercise sessions", Toast.LENGTH_SHORT).show()
-    return emptyList()
+    val request = ReadRecordsRequest(
+      recordType = ExerciseSessionRecord::class,
+      timeRangeFilter = TimeRangeFilter.Companion.between(start, end)
+    )
+    val response = healthConnectClient.readRecords(request)
+    return response.records
   }
 
   /**
