@@ -52,6 +52,7 @@ const val MIN_SUPPORTED_SDK = Build.VERSION_CODES.O_MR1
  * Demonstrates reading and writing from Health Connect.
  */
 class HealthConnectManager(private val context: Context) {
+  // 可先取得 healthConnectClient，是 Health Connect API 的進入點
   private val healthConnectClient by lazy { HealthConnectClient.getOrCreate(context) }
 
   var availability = mutableStateOf(HealthConnectAvailability.NOT_SUPPORTED)
@@ -84,10 +85,26 @@ class HealthConnectManager(private val context: Context) {
   }
 
   /**
-   * TODO: Writes [WeightRecord] to Health Connect.
+   * 插入體重資訊的範例
    */
   suspend fun writeWeightInput(weightInput: Double) {
-    Toast.makeText(context, "TODO: write weight input", Toast.LENGTH_SHORT).show()
+    // 第一個：取得記錄時間
+    val time = ZonedDateTime.now().withNano(0)
+    // 第二個：製造記錄
+    val weightRecord = WeightRecord(
+      weight = Mass.kilograms(weightInput),
+      time = time.toInstant(),
+      zoneOffset = time.offset
+    )
+    // 第三個：把記錄變成 List
+    val records = listOf(weightRecord)
+    // 第四個：插入記錄
+    try {
+      healthConnectClient.insertRecords(records)
+      Toast.makeText(context, "TODO: write weight input", Toast.LENGTH_SHORT).show()
+    } catch (e: Exception) {
+      Toast.makeText(context, e.message.toString(), Toast.LENGTH_SHORT).show()
+    }
   }
 
   /**
