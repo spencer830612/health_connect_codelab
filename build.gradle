@@ -15,22 +15,25 @@
  */
 
 buildscript {
-    ext.kotlin_version = '1.8.0'
     ext {
         activity_compose_version = '1.5.1'
         hilt_navigation_compose_version = '1.0.0'
         navigation_compose_version = '2.5.1'
-
+        kotlin_version = '2.0.0-Beta3'
         concurrent_futures_version = '1.1.0'
         lifecycle_version = '2.5.1'
     }
     repositories {
         google()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:8.5.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0-Beta3"
+        classpath "org.jetbrains.kotlin:compose-compiler-gradle-plugin:2.0.10"
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
