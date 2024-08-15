@@ -132,20 +132,67 @@ class HealthConnectManager(private val context: Context) {
   }
 
   /**
-   * TODO: Writes an [ExerciseSessionRecord] to Health Connect.
+   * 建立一段運動記錄
    */
   suspend fun writeExerciseSession(start: ZonedDateTime, end: ZonedDateTime) {
-    Toast.makeText(context, "TODO: write exercise session", Toast.LENGTH_SHORT).show()
+    // 同時有什麼記錄，都丟在同個 List 裡
+    val exerciseRecord = listOf(
+      ExerciseSessionRecord(
+        startTime = start.toInstant(),
+        startZoneOffset = start.offset,
+        endTime = end.toInstant(),
+        endZoneOffset = end.offset,
+        exerciseType = ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
+        title = "My Run #${Random.nextInt(0, 60)}"
+      ),
+      StepsRecord(
+        startTime = start.toInstant(),
+        startZoneOffset = start.offset,
+        endTime = end.toInstant(),
+        endZoneOffset = end.offset,
+        count = (1000 + 1000 * Random.nextInt(3)).toLong()
+      ),
+      TotalCaloriesBurnedRecord(
+        startTime = start.toInstant(),
+        startZoneOffset = start.offset,
+        endTime = end.toInstant(),
+        endZoneOffset = end.offset,
+        energy = Energy.calories((140 + Random.nextInt(20)) * 0.01)
+      )
+    ) + buildHeartRateSeries(start, end)
+    healthConnectClient.insertRecords(exerciseRecord)
   }
 
   /**
-   * TODO: Build [HeartRateRecord].
+   * 建立一系列的心跳記錄
    */
   private fun buildHeartRateSeries(
     sessionStartTime: ZonedDateTime,
     sessionEndTime: ZonedDateTime,
   ): HeartRateRecord {
-    TODO()
+    val samples = mutableListOf<HeartRateRecord.Sample>()
+    var time = sessionStartTime
+    while (time.isBefore(sessionEndTime)){
+      // 第二步：一系列的心跳記錄
+      samples.add(
+        // 第一步：一個心跳記錄
+        HeartRateRecord.Sample(
+          time = time.toInstant(),
+          beatsPerMinute = (80 + Random.nextInt(80)).toLong()
+        )
+      )
+      time = time.plusSeconds(30)
+    }
+    // 第三步：建立一系列的心跳記錄
+    // 開始時間與結束時間應該要是一樣的
+    val record = HeartRateRecord(
+      startTime = sessionStartTime.toInstant(),
+      startZoneOffset = sessionStartTime.offset,
+      endTime = sessionEndTime.toInstant(),
+      endZoneOffset = sessionEndTime.offset,
+      samples = samples
+    )
+    return record
   }
 
   /**
