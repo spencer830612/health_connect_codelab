@@ -85,6 +85,7 @@ class DifferentialChangesViewModel(private val healthConnectManager: HealthConne
         }
     }
 
+    // 透過 getChanges 這個 flow，會得到兩種不同的資料型態，依據其型態而做不同的事情
     fun getChanges() {
         viewModelScope.launch {
             tryWithPermissionsCheck {

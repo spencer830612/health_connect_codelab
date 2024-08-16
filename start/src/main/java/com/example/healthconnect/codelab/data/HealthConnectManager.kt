@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.changes.Change
+import androidx.health.connect.client.impl.converters.response.toChangesResponse
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
@@ -215,18 +216,32 @@ class HealthConnectManager(private val context: Context) {
   }
 
   /**
-   * TODO: Obtains a changes token for the specified record types.
+   * 得到某些資料型態的變更的 token
    */
   suspend fun getChangesToken(): String {
-    Toast.makeText(context, "TODO: get changes token", Toast.LENGTH_SHORT).show()
-    return String()
+    return healthConnectClient.getChangesToken(
+      ChangesTokenRequest(
+        setOf(
+          ExerciseSessionRecord::class
+        )
+      )
+    )
   }
 
   /**
-   * TODO: Retrieve changes from a changes token.
+   * 得到相關的變化
    */
   suspend fun getChanges(token: String): Flow<ChangesMessage> = flow {
-    Toast.makeText(context, "TODO: get new changes", Toast.LENGTH_SHORT).show()
+    var nextChangeToken = token
+    do {
+      val response = healthConnectClient.getChanges(nextChangeToken)
+      if (response.changesTokenExpired){
+        throw IOException("Changes token has expired")
+      }
+      emit(ChangesMessage.ChangeList(response.changes))
+      nextChangeToken = response.nextChangesToken
+    } while (response.hasMore)
+    emit(ChangesMessage.NoMoreChanges(nextChangeToken))
   }
 
   /**
