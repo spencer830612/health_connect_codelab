@@ -22,6 +22,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.mutableStateOf
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.aggregate.AggregateMetric
 import androidx.health.connect.client.changes.Change
 import androidx.health.connect.client.impl.converters.response.toChangesResponse
 import androidx.health.connect.client.permission.HealthPermission
@@ -123,11 +124,18 @@ class HealthConnectManager(private val context: Context) {
   }
 
   /**
-   * TODO: Returns the weekly average of [WeightRecord]s.
+   * 計算一個禮拜的平均體重
    */
   suspend fun computeWeeklyAverage(start: Instant, end: Instant): Mass? {
-    // Toast.makeText(context, "TODO: get average weight", Toast.LENGTH_SHORT).show()
-    return null
+    // 第一步：輸入你要求的東西。這裡要求要一段時間的體重平均
+    val request = AggregateRequest(
+      metrics = setOf(WeightRecord.WEIGHT_AVG),
+      timeRangeFilter = TimeRangeFilter.between(start, end)
+    )
+    // 第二步：跟 health connect 要求
+    val response = healthConnectClient.aggregate(request)
+    // 第三步：回應資料，必須要打對你要求的資料型態
+    return response[WeightRecord.WEIGHT_AVG]
   }
 
   /**
@@ -207,12 +215,49 @@ class HealthConnectManager(private val context: Context) {
   }
 
   /**
-   * TODO: Reads aggregated data and raw data for selected data types, for a given [ExerciseSessionRecord].
+   * 取得該段運動的綜合平均資料
    */
   suspend fun readAssociatedSessionData(
       uid: String,
   ): ExerciseSessionData {
-    TODO()
+    // 根據該運動 uuid 取得請求
+    val exerciseSession = healthConnectClient.readRecord(ExerciseSessionRecord::class, uid)
+    // 取得後輸入該段運動的開始時間與結束時間
+    val timeRangeFilter = TimeRangeFilter.between(
+      startTime = exerciseSession.record.startTime,
+      endTime = exerciseSession.record.endTime
+    )
+    // 輸入你想要要求的資料
+    val aggregateDataType : Set<AggregateMetric<Comparable<*>>> = setOf(
+      ExerciseSessionRecord.EXERCISE_DURATION_TOTAL,
+      StepsRecord.COUNT_TOTAL,
+      TotalCaloriesBurnedRecord.ENERGY_TOTAL,
+      HeartRateRecord.BPM_AVG,
+      HeartRateRecord.BPM_MAX,
+      HeartRateRecord.BPM_MIN
+    )
+    // 限定只能撈回在這個 APP 記錄的資料，也可以不加 dataOriginFilter
+    val dataOriginFilter = setOf(exerciseSession.record.metadata.dataOrigin)
+    // 把上面三個丟進來去請求資料
+    val aggregateRequest = AggregateRequest(
+      metrics = aggregateDataType,
+      timeRangeFilter = timeRangeFilter,
+      dataOriginFilter = dataOriginFilter
+    )
+    val aggregateData = healthConnectClient.aggregate(aggregateRequest)
+    // 詳情請見 readData，裡面已經跑過上面的請求過程，還可以學習 inline function 的宣告方式
+    val heartRateData = readData<HeartRateRecord>(timeRangeFilter, dataOriginFilter)
+    
+    return ExerciseSessionData(
+      uid = uid,
+      totalActiveTime = aggregateData[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL],
+      totalSteps = aggregateData[StepsRecord.COUNT_TOTAL],
+      totalEnergyBurned = aggregateData[TotalCaloriesBurnedRecord.ENERGY_TOTAL],
+      avgHeartRate = aggregateData[HeartRateRecord.BPM_AVG],
+      maxHeartRate = aggregateData[HeartRateRecord.BPM_MAX],
+      minHeartRate = aggregateData[HeartRateRecord.BPM_MIN],
+      heartRateSeries = heartRateData
+    )
   }
 
   /**
