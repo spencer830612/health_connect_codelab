@@ -15,6 +15,7 @@
  */
 package com.example.healthconnect.codelab.presentation.screen.exercisesession
 
+import PrintStack
 import android.os.RemoteException
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -60,6 +61,7 @@ class ExerciseSessionViewModel(private val healthConnectManager: HealthConnectMa
   val permissionsLauncher = healthConnectManager.requestPermissionsActivityContract()
 
   fun initialLoad() {
+    PrintStack()
     viewModelScope.launch {
       tryWithPermissionsCheck {
         readExerciseSessions()
@@ -87,9 +89,8 @@ class ExerciseSessionViewModel(private val healthConnectManager: HealthConnectMa
   }
 
   private suspend fun readExerciseSessions() {
-    val startOfDay = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
+    val startOfDay = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).minusDays(100)
     val now = Instant.now()
-
     sessionsList.value = healthConnectManager.readExerciseSessions(startOfDay.toInstant(), now)
   }
 

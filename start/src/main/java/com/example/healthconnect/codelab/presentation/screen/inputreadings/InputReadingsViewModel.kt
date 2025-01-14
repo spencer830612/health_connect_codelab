@@ -16,6 +16,7 @@
 package com.example.healthconnect.codelab.presentation.screen.inputreadings
 
 import android.os.RemoteException
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +77,12 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
     val now = Instant.now()
     val endofWeek = startOfDay.toInstant().plus(7, ChronoUnit.DAYS)
     readingsList.value = healthConnectManager.readWeightInputs(startOfDay.toInstant(), now)
+    val list = readingsList.value
+    for (i in list) {
+      Log.i("data", "metadata.id: ${i.metadata.id}")
+      Log.i("data", "clientRecordId: ${i.metadata.clientRecordId.toString()}")
+      Log.i("data", "metadata.clientRecordVersion: ${i.metadata.clientRecordVersion}")
+    }
     weeklyAvg.value =
       healthConnectManager.computeWeeklyAverage(startOfDay.toInstant(), endofWeek)
   }
